@@ -2,6 +2,7 @@ const socketIO = require("socket.io");
 const logger = require("../../utils/logger");
 
 let socketServer = null;
+let players = [];
 const context = "Socket Coordinator"
 
 async function SocketServer(server) {
@@ -16,8 +17,12 @@ async function SocketServer(server) {
     
     io.on("connection", (socket) => {
         logger.info(`[${context}] New connection stablished`);
+        players.push({
+            id: socket.id
+        });
 
-        socket.on("start", (socket) => {
+        socket.on("start", (payload) => {    
+            logger.silly(`${socket.id}`)
             logger.info("Hola mundo!")
         });
     });
