@@ -1,0 +1,22 @@
+{
+  "name": "program-web-battleship",
+  "version": "1.0.0",
+  "description": "program-web-16941-project-server",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index",
+    "start:local": "node --env-file=.env src/index",
+    "start:dev": "node --watch --env-file=.env src/index"
+  },
+  "keywords": [
+    "js",
+    "socket.io"
+  ],
+  "author": "luisrf0540@gmail.com",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "winston": "^3.17.0"
+  }
+}
