@@ -17,7 +17,7 @@ async function SocketServer(server) {
     io.on("connection", (socket) => {
         logger.info(`[${context}] New connection stablished`);
 
-        socket.on(events.start, (socket) => {
+        socket.on("start", (socket) => {
             logger.info("Hola mundo!")
         });
     });
