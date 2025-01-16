@@ -17,13 +17,36 @@ async function SocketServer(server) {
     
     io.on("connection", (socket) => {
         logger.info(`[${context}] New connection stablished`);
-        players.push({
-            id: socket.id
-        });
 
-        socket.on("start", (payload) => {    
-            logger.silly(`${socket.id}`)
-            logger.info("Hola mundo!")
+        socket.on("connect-user", (username) => {  
+            let newUser = true;
+            logger.info("Connecting user.....");
+            logger.debug(`username send: ${username}`);
+            if (!username || username === "") {
+                logger.error("username invalid");
+                socket.emit("error", "username invalid");
+                return;
+            }
+            for (const player of players) {
+                if (player.id === socket.id) {
+                    player.username = username;
+                    newUser = false;
+                    break;
+                }
+                if (player.username === username) {
+                    logger.error("username in use");
+                    socket.emit("error", "username in use");
+                    return;
+                }
+            }
+            if (newUser)
+                players.push({
+                    id: socket.id,
+                    username: username
+                })
+            logger.info("Connect succesfull");
+            logger.debug(`Users connected: ${players.length}`)
+            socket.emit("confirm", "OK")
         });
     });
 
