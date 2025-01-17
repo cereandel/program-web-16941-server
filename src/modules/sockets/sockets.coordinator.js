@@ -61,13 +61,17 @@ async function SocketServer(server) {
         socket.on("begin", (payload) => {
             try {
                 let gameFind = false;
+                logger.info("Searching game...");
+                logger.debug(`payload: ${payload}`);
                 for (const game of games) {
                     if (!game.gameInPlay()) {
+                        logger.info("Found game");
                         game.addPlayer(payload.username, payload.ships);
                         gameFind = true;
                         const gamePlayers = game.getPlayers();
                         const player1 = getSocketIdByUsername(gamePlayers[0].username);
-                        const player2 = getSocketIdByUsername(gamePlayers[1].username)
+                        const player2 = getSocketIdByUsername(gamePlayers[1].username);
+                        logger.debug(`player1: ${gamePlayers[0].username} - player2: ${gamePlayers[1].username}`)
                         io.to(player1).emit("game-found", {
                             oponnent: gamePlayers[1].username
                         });
@@ -83,11 +87,13 @@ async function SocketServer(server) {
                     }
                 }
                 if (!gameFind) {
+                    logger.info("Creating game...");
                     const board = new battleship();
                     board.addPlayer(payload.username, payload.ships);
                     games.push(board);
                 }
             } catch (error) {
+                logger.error(error);
                 socket.emit("error", error);
             }
         });
