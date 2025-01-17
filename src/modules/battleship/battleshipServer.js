@@ -3,7 +3,7 @@ const coordinates = require("./coordinates");
 
 function getShipSpaces(shipId) {
     for (ship of shipsData)
-        if (shipId === ship.id) return ship.spaces;
+        if (shipId === ship.shipID) return ship.spaces;
     return 0;
 }
 
