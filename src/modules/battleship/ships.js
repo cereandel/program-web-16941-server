@@ -5,7 +5,7 @@ const shipsData = [
     },
     {
         shipID: 2,
-        spaces: 2
+        spaces: 3
     },
     {
         shipID: 3,
