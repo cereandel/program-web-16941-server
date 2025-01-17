@@ -77,5 +77,32 @@ class gameBoard {
             username,
             board
         });
+        if (this.#players.length === this.#maximumPlayers)
+            return true;
+        return false;
+    }
+
+    maximumPlayers() {
+        if (this.#players.length === this.#maximumPlayers) 
+            return true
+        return false;
+    }
+
+    begin() {
+        if (this.#players.length < 2) 
+            throw new Error("There are not enough players");
+
+        this.#turn = 0;
+        this.#inPlay = true;
+    }
+
+    getPlayers() {
+        return this.#players;
+    }
+
+    gameInPlay() {
+        return this.#inPlay;
     }
 }
+
+module.exports = gameBoard;

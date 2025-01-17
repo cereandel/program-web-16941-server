@@ -1,9 +1,18 @@
 const socketIO = require("socket.io");
 const logger = require("../../utils/logger");
+const battleship = require("../battleship/battleshipServer");
 
 let socketServer = null;
 let players = [];
+let games = [];
 const context = "Socket Coordinator"
+
+function getSocketIdByUsername(username) {
+    for (const player of players) {
+        if (player.username === username)
+            return player.id
+    }
+}
 
 async function SocketServer(server) {
     const io = socketIO(server, {
@@ -48,6 +57,44 @@ async function SocketServer(server) {
             logger.debug(`Users connected: ${players.length}`)
             socket.emit("confirm", "OK")
         });
+
+        socket.on("begin", (payload) => {
+            try {
+                let gameFind = false;
+                for (const game of games) {
+                    if (!game.gameInPlay()) {
+                        game.addPlayer(payload.username, payload.ships);
+                        gameFind = true;
+                        const gamePlayers = game.getPlayers();
+                        const player1 = getSocketIdByUsername(gamePlayers[0].username);
+                        const player2 = getSocketIdByUsername(gamePlayers[1].username)
+                        io.to(player1).emit("game-found", {
+                            oponnent: gamePlayers[1].username
+                        });
+                        io.to(player2).emit("game-found", {
+                            oponnent: gamePlayers[0].username
+                        });
+                        io.to(player1).emit("turn", {
+                            turn: gamePlayers[0].username
+                        });
+                        io.to(player1).emit("turn", {
+                            turn: gamePlayers[0].username
+                        });
+                    }
+                }
+                if (!gameFind) {
+                    const board = new battleship();
+                    board.addPlayer(payload.username, payload.ships);
+                    games.push(board);
+                }
+            } catch (error) {
+                socket.emit("error", error);
+            }
+        });
+
+        socket.on("play", (payload) => {
+
+        })
     });
 
 };
