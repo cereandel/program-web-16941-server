@@ -81,7 +81,7 @@ async function SocketServer(server) {
                         io.to(player1).emit("turn", {
                             turn: gamePlayers[0].username
                         });
-                        io.to(player1).emit("turn", {
+                        io.to(player2).emit("turn", {
                             turn: gamePlayers[0].username
                         });
                     }

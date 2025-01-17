@@ -15,7 +15,7 @@ function shipExists(shipId) {
 
 function shipUsed(shipId, ships) {
     for (id of ships)
-        if (shipId = id) return true;
+        if (shipId === id) return true;
     return false;
 }
 
