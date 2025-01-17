@@ -3,7 +3,7 @@ const coordinates = require("./coordinates");
 
 function getShipSpaces(shipId) {
     for (ship of shipsData)
-        if (shipId === ship) return ship.spaces;
+        if (shipId === ship.id) return ship.spaces;
     return 0;
 }
 
@@ -95,6 +95,8 @@ class gameBoard {
         this.#turn = 0;
         this.#inPlay = true;
     }
+
+
 
     getPlayers() {
         return this.#players;
