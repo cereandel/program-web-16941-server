@@ -72,6 +72,7 @@ async function SocketServer(server) {
                         const player1 = getSocketIdByUsername(gamePlayers[0].username);
                         const player2 = getSocketIdByUsername(gamePlayers[1].username);
                         logger.debug(`player1: ${gamePlayers[0].username} - player2: ${gamePlayers[1].username}`)
+                        game.begin();
                         io.to(player1).emit("game-found", {
                             oponnent: gamePlayers[1].username
                         });
