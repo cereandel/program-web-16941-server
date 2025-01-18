@@ -33,6 +33,27 @@ function getVerticalCoordinate(coordinate) {
     throw new Error("Wrong Coordinate");
 }
 
+function verifyDrownAndEnd(idShip, board) {
+    let drown = true;
+    let finish = true;
+    for (let i = 0; i < 10; i++) {
+        for (let j = 0; j < 10; j++) {
+            if (board[i][j] !== 0 && board[i][j] !== 'x')
+                finish = false;
+            if (board[i][j] === idShip)
+                drown = false;
+            if (!finish && !drown)
+                break;
+        }
+        if (!finish && !drown)
+            break;
+    }
+    return {
+        drown,
+        finish
+    }
+}
+
 class gameBoard {
     #players;
     #turn;
@@ -96,7 +117,26 @@ class gameBoard {
         this.#inPlay = true;
     }
 
-
+    makePlay(username, position) {
+        const indexOponnent = this.#players[0].username === username ? 1 : 0;
+        if (indexOponnent !== this.#turn)
+            throw new Error("Invalid turn");
+        const hCoordinate = getHorizontalCoordinate(position.charAt(0));
+        const vCoordinate = getVerticalCoordinate(position.slice(1));
+        const fieldOriginalValue = this.#players[indexOponnent].board[hCoordinate][vCoordinate];
+        let playStatus = {};
+        playStatus.username = this.#players[indexOponnent].username;
+        playStatus.position = position;
+        if (fieldOriginalValue >= 0 && fieldOriginalValue <= 5) 
+            this.#players.board[hCoordinate][vCoordinate] = "x";
+        else
+            throw new Error("Invalid play");
+        const boardStatus = verifyDrownAndEnd(fieldOriginalValue, this.#players[indexOponnent].board);
+        return {
+            ...playStatus,
+            ...boardStatus
+        }
+    }
 
     getPlayers() {
         return this.#players;

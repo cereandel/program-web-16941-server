@@ -100,7 +100,27 @@ async function SocketServer(server) {
         });
 
         socket.on("play", (payload) => {
-
+            for (const game of games) {
+                const players = game.getPlayers();
+                const player = players.find((pl) => { pl.id = socket.id })
+                if (player) {
+                    try {
+                        const result = game.makePlay(player.username, payload.position);
+                        socket.emit("play-result", result);
+                        if (result.finish) {
+                            io.to(players[0].id).emit("finish", {
+                                winner: player.username
+                            });
+                            io.to(players[1].id).emit("finish", {
+                                winner: player.username
+                            });
+                        }
+                        
+                    } catch (error) {
+                        socket.emit("error", error);
+                    }
+                }
+            }
         })
     });
 
