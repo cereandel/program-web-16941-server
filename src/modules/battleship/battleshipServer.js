@@ -84,13 +84,13 @@ class gameBoard {
             let hCoordinate = getHorizontalCoordinate(ship.position.charAt(0));
             let vCoordinate = getVerticalCoordinate(ship.position.slice(1));
             for (let i = 0; i < getShipSpaces(ship.id); i++) {
+                if(hCoordinate >= 10 || vCoordinate >= 10)
+                    throw new Error("Ships in invalid position");
                 board[hCoordinate][vCoordinate] = ship.id;
                 if (ship.vertical)
                     hCoordinate++;
                 else
                     vCoordinate++;
-                if(hCoordinate >= 10 || vCoordinate >= 10)
-                    throw new Error("Ships in invalid position");
             }
             shipsUsed.push(ship.id);
         }
