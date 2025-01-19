@@ -1,21 +1,22 @@
 const shipsData = require("./ships");
 const coordinates = require("./coordinates");
+const logger = require("../../utils/logger");
 
 function getShipSpaces(shipId) {
     for (ship of shipsData)
-        if (shipId === ship.shipID) return ship.spaces;
+        if (shipId == ship.shipID) return ship.spaces;
     return 0;
 }
 
 function shipExists(shipId) {
     for (ship of shipsData)
-        if (shipId === ship) return true;
+        if (shipId === ship.shipID) return true;
     return false;
 }
 
-function shipUsed(shipId, ships) {
-    for (id of ships)
-        if (shipId === id) return true;
+function shipUsed(shipId, shipsU) {
+    for (usedShip of shipsU)
+        if (shipId === usedShip) return true;
     return false;
 }
 
@@ -67,46 +68,19 @@ class gameBoard {
         this.#inPlay = false;
     }
 
-    addPlayer(username, ships) {
-        if (this.#players.length === this.#maximumPlayers) 
-            throw new Error("Full Game");
-        if (this.#inPlay)
-            throw new Error("Game in progress");
-        if (ships.length !== 5)
-            throw new Error("Ships imcomplete");
-        let board = new Array(10).fill(new Array(10).fill(0));
-        let shipsUsed = [];
-        for (let ship of ships) {
-            if (!shipExists(ship.id))
-                throw new Error("Ship does not exist");
-            if (shipUsed(ship.id, shipsUsed)) 
-                throw new Error("Repeated ships");
-            let hCoordinate = getHorizontalCoordinate(ship.position.charAt(0));
-            let vCoordinate = getVerticalCoordinate(ship.position.slice(1));
-            for (let i = 0; i < getShipSpaces(ship.id); i++) {
-                if(hCoordinate >= 10 || vCoordinate >= 10)
-                    throw new Error("Ships in invalid position");
-                board[hCoordinate][vCoordinate] = ship.id;
-                if (ship.vertical)
-                    hCoordinate++;
-                else
-                    vCoordinate++;
-            }
-            shipsUsed.push(ship.id);
-        }
-        this.#players.push({
-            username,
-            board
-        });
-        if (this.#players.length === this.#maximumPlayers)
-            return true;
-        return false;
+/* GETTERS & SETTERS */    
+    getPlayers() {
+        return this.#players;
     }
 
     maximumPlayers() {
         if (this.#players.length === this.#maximumPlayers) 
             return true
         return false;
+    }
+
+    gameInPlay() {
+        return this.#inPlay;
     }
 
     begin() {
@@ -117,33 +91,73 @@ class gameBoard {
         this.#inPlay = true;
     }
 
+    addPlayer(username, ships) {
+        // Si ya hay 2 jugadores, no se agrega nada y manda error
+        if (this.#players.length === this.#maximumPlayers) 
+            throw new Error("Full Game");
+
+        // Si la partida ya empezo, no hace nada y manda error
+        if (this.#inPlay)
+            throw new Error("Game in progress");
+
+        // Valida que lleguen bien los barcos
+        if (ships.length !== 5)
+            throw new Error("Ships sended mistake");
+
+        // Inicializa el tablero del jugador nuevo 
+        //let board = new Array(10).fill(new Array(10).fill(0));
+        let board = Array.from({ length: 10 }, () => Array(10).fill(0));
+
+        let shipsUsed = [];
+        for (let ship of ships) {
+            let hCoordinate = getHorizontalCoordinate(ship.position.charAt(0));
+            let vCoordinate = getVerticalCoordinate(ship.position.slice(1));
+            for (let i = 0; i < getShipSpaces(ship.id); i++) {
+                if(hCoordinate >= 10 || vCoordinate >= 10)
+                    throw new Error("Ships in invalid position");
+                // Marca las casillas ocupadas con el id de cada barco
+                board[hCoordinate][vCoordinate] = ship.id;
+                if (ship.vertical) {
+                    hCoordinate++;
+                } else {
+                    vCoordinate++;
+                }
+            }
+            shipsUsed.push(ship.id);
+        }
+        // Metemos el cliente y su tablero con sus barcos como objeto "players"
+        
+        this.#players.push({
+            username,
+            board
+        });
+        if (this.#players.length === this.#maximumPlayers)
+            return true;
+        return false;
+    }
+
+/* Metodo cuando se hace un disparo en la partida */
     makePlay(username, position) {
         const indexOponnent = this.#players[0].username === username ? 1 : 0;
-        if (indexOponnent !== this.#turn)
-            throw new Error("Invalid turn");
+        //if (indexOponnent == turno)
+        //    throw new Error("Invalid turn");
         const hCoordinate = getHorizontalCoordinate(position.charAt(0));
         const vCoordinate = getVerticalCoordinate(position.slice(1));
+        // en fieldOriginalValue, si == 5 Portaaviones, si es ==  4 es es Crucero, ... 
         const fieldOriginalValue = this.#players[indexOponnent].board[hCoordinate][vCoordinate];
         let playStatus = {};
         playStatus.username = this.#players[indexOponnent].username;
         playStatus.position = position;
-        if (fieldOriginalValue >= 0 && fieldOriginalValue <= 5) 
-            this.#players.board[hCoordinate][vCoordinate] = "x";
-        else
-            throw new Error("Invalid play");
+        playStatus.hit = fieldOriginalValue != 0
+        if (fieldOriginalValue > 0 && fieldOriginalValue <= 5) 
+            this.#players[indexOponnent].board[hCoordinate][vCoordinate] = "x";
+        //else
+        //    throw new Error("Invalid play");
         const boardStatus = verifyDrownAndEnd(fieldOriginalValue, this.#players[indexOponnent].board);
         return {
             ...playStatus,
             ...boardStatus
         }
-    }
-
-    getPlayers() {
-        return this.#players;
-    }
-
-    gameInPlay() {
-        return this.#inPlay;
     }
 }
 
