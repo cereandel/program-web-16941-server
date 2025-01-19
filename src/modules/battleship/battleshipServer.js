@@ -149,7 +149,7 @@ class gameBoard {
         playStatus.username = this.#players[indexOponnent].username;
         playStatus.position = position;
         playStatus.hit = fieldOriginalValue != 0
-        if (fieldOriginalValue > 0 && fieldOriginalValue <= 5) 
+        if (fieldOriginalValue => 0 && fieldOriginalValue <= 5) 
             this.#players[indexOponnent].board[hCoordinate][vCoordinate] = "x";
         //else
         //    throw new Error("Invalid play");
