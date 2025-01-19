@@ -2,9 +2,31 @@ const socketIO = require("socket.io");
 const logger = require("../../utils/logger");
 const battleship = require("../battleship/battleshipServer");
 
+let turno = 0;
 let socketServer = null;
 let players = [];
+/* Estructura del objeto player: 
+{
+    id: ....        --> id del socket de donde se conecto el cliente
+    username: ..... --> username del cliente 
+}
+*/
+
 let games = [];
+/* Estructura del objeto game: (CLASE BOARD)
+{
+    #players [            --> Clientes con su tablero
+        username:  ....   --> Usuario del cliente
+        board[][]: ....   --> Tablero hecho como una matriz 10x10, dentro de cada casilla ira el id del barco que este detro
+    ]:     
+    #turn:           .... --> 
+    #inPlay:         .... --> 
+    #maximumPLayers: .... --> 
+
+}
+*/
+
+
 const context = "Socket Coordinator"
 
 function getSocketIdByUsername(username) {
@@ -100,13 +122,34 @@ async function SocketServer(server) {
         });
 
         socket.on("play", (payload) => {
+            // Buscamos partida por partida... 
+            playersGame = [];
+            player = [];
             for (const game of games) {
-                const players = game.getPlayers();
-                const player = players.find((pl) => { pl.id = socket.id })
+                // Me traigo los jugadores es esta partida del for... 
+                const playersGame = game.getPlayers();
+                // Busco que el jugador que envio el disparo este dentro de esta partida del for...
+                const player = playersGame.find((pl) => {
+                    // Busco en todos los jugadores guardados cual de ellos tiene el id del socket de esta partida
+                    let client = players.find((cl) => cl.username === pl.username);
+                    return client && client.id === socket.id;
+                });
+                // Cuando encuentro la partida del jugador que envio el disparo, procedo a devolver el resultado
                 if (player) {
                     try {
+                        // Guarda en result si el jugador que decibio el disparo perdio todos los barcos
                         const result = game.makePlay(player.username, payload.position);
+                        logger.info(`Resultado => [${JSON.stringify(result)}] `);
+                        /* Estructura de lo que recibe "result"  
+                            {
+                                username: ...,
+                                position: ...,
+                                hit:      ...,
+                                drown:    ...,
+                                finish:   ...
+                            } */
                         socket.emit("play-result", result);
+                        // Si perdio los barcos, avisa a los clientes
                         if (result.finish) {
                             io.to(players[0].id).emit("finish", {
                                 winner: player.username
@@ -114,8 +157,19 @@ async function SocketServer(server) {
                             io.to(players[1].id).emit("finish", {
                                 winner: player.username
                             });
-                        }
-                        
+                            break;
+                        } 
+                        const gamePlayers = game.getPlayers();
+                        const player1 = getSocketIdByUsername(gamePlayers[0].username);
+                        const player2 = getSocketIdByUsername(gamePlayers[1].username);
+                        if (turno == 0) turno = 1;
+                        else turno = 0;
+                        io.to(player1).emit("turn", {
+                            turn: gamePlayers[turno].username
+                        });
+                        io.to(player2).emit("turn", {
+                            turn: gamePlayers[turno].username
+                        });
                     } catch (error) {
                         socket.emit("error", error);
                     }
