@@ -148,7 +148,8 @@ async function SocketServer(server) {
                                 drown:    ...,
                                 finish:   ...
                             } */
-                        socket.emit("play-result", result);
+                        io.to(players[0].id).emit("play-result", result);
+                        io.to(players[1].id).emit("play-result", result);
                         // Si perdio los barcos, avisa a los clientes
                         if (result.finish) {
                             io.to(players[0].id).emit("finish", {
