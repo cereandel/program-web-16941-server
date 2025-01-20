@@ -1,6 +1,7 @@
 const socketIO = require("socket.io");
 const logger = require("../../utils/logger");
 const battleship = require("../battleship/battleshipServer");
+const { log } = require("winston");
 
 var numeroPartida = 0;
 let turno = 0;
@@ -89,7 +90,7 @@ async function SocketServer(server) {
                 for (const game of games) {
                     if (!game.gameInPlay()) {
                         logger.info("Found game");
-                        socket.join('game_${numeroPartida}');
+                        socket.join('game_'+numeroPartida);
                         game.addPlayer(payload.username, payload.ships);
                         gameFind = true;
                         const gamePlayers = game.getPlayers();
@@ -114,9 +115,9 @@ async function SocketServer(server) {
                     logger.info("Creating game...");
                     const board = new battleship();
                     board.addPlayer(payload.username, payload.ships);
-                    board.setGameName('game_${numeroPartida}');
+                    board.setGameName('game_'+numeroPartida);
                     games.push(board);
-                    socket.join('game_${numeroPartida}');
+                    socket.join('game_'+numeroPartida);
                 }
             } catch (error) {
                 logger.error(error);
@@ -163,14 +164,13 @@ async function SocketServer(server) {
                                 const socketId = getSocketIdByUsername(gamePlayer.username);
                                 const clientSocket = io.sockets.sockets.get(socketId);
                                 if (clientSocket) {
-                                    clientSocket.leave('game_${numeroPartida}');
+                                    let salaJuego = game.getGameName();
+                                    clientSocket.leave(salaJuego);
                                 }
                             }
                             break;
                         } 
                         const gamePlayers = game.getPlayers();
-                        const player1 = getSocketIdByUsername(gamePlayers[0].username);
-                        const player2 = getSocketIdByUsername(gamePlayers[1].username);
                         if (turno == 0) turno = 1;
                         else turno = 0;
                         io.to(salaJuego).emit("turn", {
