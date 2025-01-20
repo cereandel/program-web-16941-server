@@ -1,7 +1,9 @@
 const socketIO = require("socket.io");
 const logger = require("../../utils/logger");
 const battleship = require("../battleship/battleshipServer");
+const { log } = require("winston");
 
+var numeroPartida = 0;
 let turno = 0;
 let socketServer = null;
 let players = [];
@@ -22,7 +24,7 @@ let games = [];
     #turn:           .... --> 
     #inPlay:         .... --> 
     #maximumPLayers: .... --> 
-
+    #roomName:       .... -->
 }
 */
 
@@ -88,6 +90,7 @@ async function SocketServer(server) {
                 for (const game of games) {
                     if (!game.gameInPlay()) {
                         logger.info("Found game");
+                        socket.join('game_'+numeroPartida);
                         game.addPlayer(payload.username, payload.ships);
                         gameFind = true;
                         const gamePlayers = game.getPlayers();
@@ -101,19 +104,20 @@ async function SocketServer(server) {
                         io.to(player2).emit("game-found", {
                             oponnent: gamePlayers[0].username
                         });
-                        io.to(player1).emit("turn", {
+                        let salaJuego = game.getGameName();
+                        io.to(salaJuego).emit("turn", {
                             turn: gamePlayers[0].username
                         });
-                        io.to(player2).emit("turn", {
-                            turn: gamePlayers[0].username
-                        });
+                        numeroPartida++;
                     }
                 }
                 if (!gameFind) {
                     logger.info("Creating game...");
                     const board = new battleship();
                     board.addPlayer(payload.username, payload.ships);
+                    board.setGameName('game_'+numeroPartida);
                     games.push(board);
+                    socket.join('game_'+numeroPartida);
                 }
             } catch (error) {
                 logger.error(error);
@@ -151,24 +155,28 @@ async function SocketServer(server) {
                                 drown:    ...,
                                 finish:   ...
                             } */
-                        io.to(player1).emit("play-result", result);
-                        io.to(player2).emit("play-result", result);
+                        let salaJuego = game.getGameName();
+                        io.to(salaJuego).emit("play-result", result);
                         // Si perdio los barcos, avisa a los clientes
                         if (result.finish) {
-                            io.to(players[0].id).emit("finish", {
+                            io.to(salaJuego).emit("finish", {
                                 winner: player.username
                             });
-                            io.to(players[1].id).emit("finish", {
-                                winner: player.username
-                            });
+                            const gamePlayers = game.getPlayers();
+                            for (const gamePlayer of gamePlayers) {
+                                const socketId = getSocketIdByUsername(gamePlayer.username);
+                                const clientSocket = io.sockets.sockets.get(socketId);
+                                if (clientSocket) {
+                                    let salaJuego = game.getGameName();
+                                    clientSocket.leave(salaJuego);
+                                }
+                            }
                             break;
                         } 
+                        const gamePlayers = game.getPlayers();
                         if (turno == 0) turno = 1;
                         else turno = 0;
-                        io.to(player1).emit("turn", {
-                            turn: gamePlayers[turno].username
-                        });
-                        io.to(player2).emit("turn", {
+                        io.to(salaJuego).emit("turn", {
                             turn: gamePlayers[turno].username
                         });
                     } catch (error) {

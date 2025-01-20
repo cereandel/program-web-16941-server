@@ -60,12 +60,14 @@ class gameBoard {
     #turn;
     #maximumPlayers;
     #inPlay;
+    #roomName;
 
     constructor() {
         this.#players = [];
         this.#turn = -1;
         this.#maximumPlayers = 2;
         this.#inPlay = false;
+        this.#roomName = "";
     }
 
 /* GETTERS & SETTERS */    
@@ -81,6 +83,12 @@ class gameBoard {
 
     gameInPlay() {
         return this.#inPlay;
+    }
+    getGameName() {
+        return this.#roomName;
+    }
+    setGameName(name){
+        this.#roomName = name;
     }
 
     begin() {
@@ -151,7 +159,16 @@ class gameBoard {
         playStatus.hit = fieldOriginalValue != 0
         if (fieldOriginalValue => 0 && fieldOriginalValue <= 5) 
             this.#players[indexOponnent].board[hCoordinate][vCoordinate] = "x";
-        //else
+        /* else {
+            for (let i = 0; i < 10; i++) {
+                for (let j = 0; j < 10; j++) {
+                    if (this.#players[indexOponnent].board[i][j] !== "x"){
+                        this.#players[indexOponnent].board[i][j] = "x";
+                        playStatus.position = coordinates.hCoordinates[i].character + coordinates.vCoordinates[j].character;
+                    }
+                }
+            }
+        } */
         //    throw new Error("Invalid play");
         const boardStatus = verifyDrownAndEnd(fieldOriginalValue, this.#players[indexOponnent].board);
         return {
