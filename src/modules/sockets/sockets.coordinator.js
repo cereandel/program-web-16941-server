@@ -173,7 +173,6 @@ async function SocketServer(server) {
                             }
                             break;
                         } 
-                        const gamePlayers = game.getPlayers();
                         if (turno == 0) turno = 1;
                         else turno = 0;
                         io.to(salaJuego).emit("turn", {
