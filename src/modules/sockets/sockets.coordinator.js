@@ -1,10 +1,8 @@
 const socketIO = require("socket.io");
 const logger = require("../../utils/logger");
 const battleship = require("../battleship/battleshipServer");
-const { log } = require("winston");
 
 var numeroPartida = 0;
-let socketServer = null;
 let players = [];
 /* Estructura del objeto player: 
 {
@@ -35,6 +33,13 @@ function getSocketIdByUsername(username) {
   }
 }
 
+function getUsernameBySocketId(socketId) {
+  for (const player of players) {
+    if (player.id === socketId) return player.username;
+  }
+  return null;
+}
+
 async function SocketServer(server) {
   const io = socketIO(server, {
     cors: {
@@ -50,7 +55,14 @@ async function SocketServer(server) {
       ],
     },
   });
-  socketServer = io;
+
+  const deletePlayers = (player1, player2) => {
+    for (const player of players) {
+      if (player.username === player1 || player.username === player2) {
+        players.splice(players.indexOf(player), 1);
+      }
+    }
+  };
 
   io.on("connection", (socket) => {
     logger.info(`[${context}] New connection stablished`);
@@ -131,13 +143,43 @@ async function SocketServer(server) {
       }
     });
 
+    socket.on("disconnect", () => {
+      const clientId = socket.id;
+      const client = getUsernameBySocketId(clientId);
+      logger.info("Desconectado: " + client);
+      for (const game of games) {
+        const gamePlayers = game.getPlayers();
+
+        const player1 = gamePlayers[0].username;
+        const player2 = gamePlayers[1].username;
+
+        logger.info(`player1: ${player1} - player2: ${player2}`);
+
+        for (const gamePlayer of gamePlayers) {
+          if (gamePlayer.username === client) {
+            let salaJuego = game.getGameName();
+            io.to(salaJuego).emit("disconnection-finish", {
+              winner: player1 === client ? player2 : player1,
+            });
+            logger.info("eliminando jugadores de la sala");
+            deletePlayers(player1, player2);
+            socket.disconnect();
+            break;
+          }
+        }
+      }
+    });
+
     socket.on("play", (payload) => {
       // Buscamos partida por partida...
       playersGame = [];
-      player = [];
+      //player = [];
       for (const game of games) {
         // Me traigo los jugadores es esta partida del for...
         const playersGame = game.getPlayers();
+
+        const player1 = gamePlayers[0].username;
+        const player2 = gamePlayers[1].username;
         // Busco que el jugador que envio el disparo este dentro de esta partida del for...
         const player = playersGame.find((pl) => {
           // Busco en todos los jugadores guardados cual de ellos tiene el id del socket de esta partida
@@ -148,8 +190,6 @@ async function SocketServer(server) {
         if (player) {
           try {
             const gamePlayers = game.getPlayers();
-            const player1 = getSocketIdByUsername(gamePlayers[0].username);
-            const player2 = getSocketIdByUsername(gamePlayers[1].username);
             // Guarda en result si el jugador que decibio el disparo perdio todos los barcos
             const result = game.makePlay(player.username, payload.position);
             logger.info(`Resultado => [${JSON.stringify(result)}] `);
@@ -175,6 +215,7 @@ async function SocketServer(server) {
                 if (clientSocket) {
                   let salaJuego = game.getGameName();
                   clientSocket.leave(salaJuego);
+                  deletePlayers(player1, player2);
                 }
               }
               break;

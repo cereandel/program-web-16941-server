@@ -64,8 +64,14 @@ class gameBoard {
   }
 
   /* GETTERS & SETTERS */
+
+
   getPlayers() {
     return this.#players;
+  }
+
+  setPlayers(players) {
+    this.#players = players;
   }
 
   getTurn() {
