@@ -141,6 +141,9 @@ async function SocketServer(server) {
                 // Cuando encuentro la partida del jugador que envio el disparo, procedo a devolver el resultado
                 if (player) {
                     try {
+                        const gamePlayers = game.getPlayers();
+                        const player1 = getSocketIdByUsername(gamePlayers[0].username);
+                        const player2 = getSocketIdByUsername(gamePlayers[1].username);
                         // Guarda en result si el jugador que decibio el disparo perdio todos los barcos
                         const result = game.makePlay(player.username, payload.position);
                         logger.info(`Resultado => [${JSON.stringify(result)}] `);
