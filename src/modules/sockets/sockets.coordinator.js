@@ -149,7 +149,7 @@ async function SocketServer(server) {
       logger.info("Desconectado: " + client);
       for (const game of games) {
         const gamePlayers = game.getPlayers();
-
+        logger.info(`gamePlayers: ${JSON.stringify(gamePlayers)}`);
         const player1 = gamePlayers[0].username;
         const player2 = gamePlayers[1].username;
 
@@ -178,8 +178,8 @@ async function SocketServer(server) {
         // Me traigo los jugadores es esta partida del for...
         const playersGame = game.getPlayers();
 
-        const player1 = gamePlayers[0].username;
-        const player2 = gamePlayers[1].username;
+        const player1 = playersGame[0].username;
+        const player2 = playersGame[1].username;
         // Busco que el jugador que envio el disparo este dentro de esta partida del for...
         const player = playersGame.find((pl) => {
           // Busco en todos los jugadores guardados cual de ellos tiene el id del socket de esta partida
